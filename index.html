@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title></title>
+    <style>
+        body{
+            font-family: sans-serif;
+            font-size: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="prntr"></div>
+    <!-- gokul -->
+
+    <script>
+        // ---------------------------
+        // 1. IP-based geolocation
+        // ---------------------------
+        async function getIpCountry() {
+          try {
+            const res = await fetch("https://ipinfo.io/json");
+            const data = await res.json();
+            return data.country || "Unknown";
+          } catch {
+            return "Unknown";
+          }
+        }
+      
+        // ---------------------------
+        // 2. Timezone-based country
+        // ---------------------------
+        const timezoneToCountryMap = {
+          "Asia/Seoul": "South Korea",
+          "Europe/London": "United Kingdom",
+          "America/New_York": "United States",
+          "Asia/Tokyo": "Japan",
+          "Asia/Calcutta": "India",
+          "Europe/Berlin": "Germany",
+          "America/Los_Angeles": "United States",
+          "Europe/Paris": "France",
+          "Africa/Cairo": "Egypt",
+          "Australia/Sydney": "Australia",
+          // Add more as needed...
+        };
+      
+        function getTimezoneCountry() {
+          const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+          return timezoneToCountryMap[tz] || tz.split("/")[0];
+        }
+      
+        // ---------------------------
+        // 3. Navigator language-based country
+        // ---------------------------
+        const languageToCountry = {
+          "en": "United Kingdom",
+          "es": "Spain",
+          "fr": "France",
+          "de": "Germany",
+          "ko": "South Korea",
+          "hi": "India",
+          "ja": "Japan",
+          "zh": "China",
+          "pt": "Portugal",
+          "ru": "Russia",
+          "it": "Italy",
+        };
+      
+        function regionToCountry(regionCode) {
+          const map = {
+            "US": "United States",
+            "GB": "United Kingdom",
+            "NZ": "New Zealand",
+            "IN": "India",
+            "KR": "South Korea",
+            "JP": "Japan",
+            "ES": "Spain",
+            "FR": "France",
+            "DE": "Germany",
+            "CN": "China",
+            "PT": "Portugal",
+            "RU": "Russia",
+            "IT": "Italy",
+            "BR": "Brazil",
+          };
+          return map[regionCode];
+        }
+      
+        function getLanguageCountries() {
+          const langs = navigator.languages || [navigator.language];
+      console.log(langs)
+          const countries = langs.map(lang => {
+            const parts = lang.split("-");
+            const baseLang = parts[0].toLowerCase();
+            const region = parts[1]?.toUpperCase();
+            if (region) return regionToCountry(region) || languageToCountry[baseLang] || "Unknown";
+            return languageToCountry[baseLang] || "Unknown";
+          });
+      
+          return [...new Set(countries)]; // Remove duplicates
+        }
+      
+        // ---------------------------
+        // 4. Timezone offset (UTC)
+        // ---------------------------
+        function getCountriesByTimezoneOffset() {
+    const offset = new Date().getTimezoneOffset(); // in minutes
+    const map = {
+      "-300": ["United States", "Canada", "Colombia", "Peru"], // UTC-5
+      "60": ["Spain", "France", "Germany", "Italy", "Nigeria"], // UTC+1
+      "180": ["Saudi Arabia", "Russia (western)", "Turkey", "Kenya"], // UTC+3
+      "-420": ["United States (Pacific)", "Canada (Pacific)"], // UTC-7
+      "240": ["Turkey", "Bulgaria"], // UTC+4
+
+      // UTC-12
+      "-720": ["Baker Island"], // UTC-12
+
+      // UTC-11
+      "-660": ["American Samoa", "Niue"], // UTC-11
+
+      // UTC-10
+      "-600": ["Hawaii (United States)", "Cook Islands"], // UTC-10
+
+      // UTC-9
+      "-540": ["Alaska (United States)", "Gambier Islands"], // UTC-9
+
+      // UTC-8
+      "-480": ["United States (Pacific)", "Canada (Pacific)", "Mexico (Baja California)"], // UTC-8
+
+      // UTC-7
+      "-420": ["United States (Mountain)", "Canada (Mountain)", "Mexico (Chihuahua, Sonora)"], // UTC-7
+
+      // UTC-6
+      "-360": ["United States (Central)", "Canada (Central)", "Mexico (Central)", "Costa Rica", "Guatemala", "El Salvador"], // UTC-6
+
+      // UTC-5
+      "-300": ["United States (Eastern)", "Canada (Eastern)", "Mexico (Eastern)", "Colombia", "Peru", "Cuba"], // UTC-5
+
+      // UTC-4
+      "-240": ["Venezuela", "Bolivia", "Dominican Republic", "Puerto Rico", "Barbados", "Venezuela"], // UTC-4
+
+      // UTC-3
+      "-180": ["Argentina", "Brazil", "Chile", "Uruguay", "Paraguay"], // UTC-3
+
+      // UTC+0
+      "0": ["United Kingdom", "Ireland", "Portugal", "Iceland", "Gambia"], // UTC+0
+
+      // UTC+1
+      "60": ["Spain", "France", "Germany", "Italy", "Nigeria", "Belgium", "Netherlands", "Luxembourg"], // UTC+1
+
+      // UTC+2
+      "120": ["South Africa", "Israel", "Egypt", "Jordan", "Greece", "Cyprus"], // UTC+2
+
+      // UTC+3
+      "180": ["Saudi Arabia", "Russia (western)", "Turkey", "Kenya", "Qatar", "Bahrain"], // UTC+3
+
+      // UTC+4
+      "240": ["United Arab Emirates", "Azerbaijan", "Armenia", "Georgia", "Oman"], // UTC+4
+
+      // UTC+5
+      "300": ["Pakistan", "Uzbekistan", "Tajikistan", "Turkmenistan"], // UTC+5
+
+      // UTC+5:30
+      "330": ["India", "Sri Lanka"], // UTC+5:30
+
+      // UTC+6
+      "360": ["Bangladesh", "Kazakhstan", "Kyrgyzstan"], // UTC+6
+
+      // UTC+7
+      "420": ["Thailand", "Vietnam", "Cambodia", "Laos", "Indonesia (Western)"], // UTC+7
+
+      // UTC+8
+      "480": ["China", "Malaysia", "Singapore", "Western Australia", "Hong Kong", "Taiwan"], // UTC+8
+
+      // UTC+9
+      "540": ["Japan", "South Korea", "North Korea", "Indonesia (Central)"], // UTC+9
+
+      // UTC+10
+      "600": ["Australia (Eastern Standard Time)", "Papua New Guinea", "Guam", "Vanuatu"], // UTC+10
+
+      // UTC+11
+      "660": ["Solomon Islands", "Vanuatu", "New Caledonia"], // UTC+11
+
+      // UTC+12
+      "720": ["New Zealand", "Fiji", "Kiribati", "Tuvalu", "Wallis and Futuna"], // UTC+12
+
+      // UTC+13
+      "780": ["Tonga", "Tokelau", "Phoenix Islands (Kiribati)"], // UTC+13
+
+      // UTC+14
+      "840": ["Line Islands (Kiribati)"], // UTC+14
+    };
+
+    // Invert the sign of the offset to match the map's keys
+    const adjustedOffset = -offset; // If the offset is positive, we need to negate it
+
+    return map[String(adjustedOffset)] || [];
+}
+
+        // ---------------------------
+        // 5. Locale-based number/currency
+        // ---------------------------
+        function getCountriesByLocale() {
+          const locale = Intl.NumberFormat().resolvedOptions().locale;
+          const currencyTest = Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD' }).format(1);
+      
+          // Simple mapping based on locale prefix
+          const prefix = locale.split("-")[0].toLowerCase();
+          const map = {
+            "en": ["United Kingdom", "United States", "Australia"],
+            "fr": ["France", "Belgium", "Canada"],
+            "de": ["Germany", "Austria", "Switzerland"],
+            "es": ["Spain", "Mexico", "Argentina"],
+            "pt": ["Portugal", "Brazil"],
+            "ko": ["South Korea"],
+            "ja": ["Japan"],
+            "zh": ["China", "Taiwan"],
+            "hi": ["India"],
+          };
+          return map[prefix] || [];
+        }
+      
+        // ---------------------------
+        // 6. Metric vs Imperial system
+        // ---------------------------
+        function getCountriesByMeasurement() {
+          // True = metric, false = imperial
+          // Simple heuristic: US, Liberia, Myanmar = imperial
+          const userLocale = Intl.NumberFormat().resolvedOptions().locale;
+          if (userLocale.startsWith("en-US")) return ["United States"];
+          return ["Other metric countries"]; // generic fallback
+        }
+      
+        // ---------------------------
+        // 7. Date formatting
+        // ---------------------------
+        function getCountriesByDateFormat() {
+          const dateStr = Intl.DateTimeFormat().format(new Date()); // e.g., "12/13/2025"
+          if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dateStr)) return ["United States"];
+          if (/^\d{1,2}\.\d{1,2}\.\d{4}$/.test(dateStr)) return ["Germany", "Austria"];
+          if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dateStr)) return ["UK", "Australia"]; 
+          return [];
+        }
+      
+        // ---------------------------
+        // 8. Keyboard layout
+        // ---------------------------
+        function getCountriesByKeyboard() {
+          if (!navigator.keyboard) return [];
+          // Placeholder: real detection requires keypress simulation
+          return ["Unknown keyboard layout countries"];
+        }
+      
+        // ---------------------------
+        // Combine everything
+        // ---------------------------
+
+        prntr = document.querySelector(".prntr")
+        async function estimateCountries() {
+          const ipCountry = await getIpCountry();
+          const tzCountry = getTimezoneCountry();
+          const languageCountries = getLanguageCountries();
+          const tzOffsetCountries = getCountriesByTimezoneOffset();
+          const localeCountries = getCountriesByLocale();
+          const measurementCountries = getCountriesByMeasurement();
+          const dateFormatCountries = getCountriesByDateFormat();
+          const keyboardCountries = getCountriesByKeyboard();
+      
+          console.log("IP-based country:", ipCountry);
+          console.log("Timezone-based country:", tzCountry);
+          console.log("Navigator language-based countries:", languageCountries.join(", "));
+          console.log("Timezone offset countries:", tzOffsetCountries.join(", "));
+          console.log("Locale/Number-based countries:", localeCountries.join(", "));
+          console.log("Measurement-based countries:", measurementCountries.join(", "));
+          console.log("Date-format-based countries:", dateFormatCountries.join(", "));
+          console.log("Keyboard-layout-based countries:", keyboardCountries.join(", "));
+
+          prntr.innerHTML =`
+          IP-based country: ${ipCountry} <br>
+          Timezone-based country: ${tzCountry} <br>
+          Navigator language-based countries: ${languageCountries.join(", ")} <br>
+          Timezone offset countries: ${tzOffsetCountries.join(", ")}
+
+          `
+        }
+      
+        estimateCountries();
+      </script>
+      
+</body>
+</html>
